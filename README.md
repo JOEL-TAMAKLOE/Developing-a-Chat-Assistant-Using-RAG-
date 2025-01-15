@@ -16,7 +16,7 @@ This assistant uses:
 - **LLaMA**: A large language model for natural language understanding.
 - **Chroma**: For vector database management to store and retrieve information efficiently.
 - **Gradio**: To create a user-friendly web interface for interaction.
-- **Libraries**: Hugging Face Transformers, PDF loaders.
+- **Libraries**: Hugging Face Transformers, PDF loaders, etc.
 
 ---
 
@@ -38,10 +38,10 @@ This assistant uses:
 ## Project Structure
 ```plaintext
 │
-├── .env                  # Environment variables
+├── .env.example          # Template for environment variables
 ├── config.py             # Configuration settings
-├── requirements.txt      # Python package dependencies
-├── notebooks/            # Jupyter notebooks for experimentation
+├── notebook/             # Jupyter notebook for development 
+├── document.zip/         # Source documents used for retrieval
 └── README.md             # Overview of the Project
 ```
 
@@ -76,6 +76,20 @@ To run this project locally, follow these steps:
 - **Asking Questions**: Type your questions into the text box and hit Enter. The assistant will respond based on its trained knowledge and the documents loaded into the system.
 - **Viewing Source Documents**: After receiving an answer, the assistant provides links to the source documents used to generate the response.
 - **Conversational History**: The chat maintains a history of interactions for context-aware responses within the session.
+
+---
+
+## Setup `.env` File
+- Copy the `.env.example` file and rename it to `.env`.
+- Replace the placeholder value for `GROG_API_KEY` with your actual API key obtained from **Grogcloud**.
+- Note: The project is configured to work specifically with Grogcloud's services. If you wish to use another provider, ensure the API is compatible and update the `config.py` file accordingly.
+
+---
+
+## Adding Source Documents
+To access the same document files used for this project:
+1. Download the `documents.zip` file from the repository.
+2. Extract the contents of `documents.zip` into a folder named `documents/` in the project root directory.
 
 ---
 
