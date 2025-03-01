@@ -42,7 +42,7 @@ This assistant uses:
 ├── config.py             # Configuration settings
 ├── notebook/             # Jupyter notebook for development 
 ├── document.zip/         # Source documents used for retrieval
-├──LICENSE                # MIT license
+├── LICENSE               # MIT license
 └── README.md             # Overview of the Project
 ```
 
