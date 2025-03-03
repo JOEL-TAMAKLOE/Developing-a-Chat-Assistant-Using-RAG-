@@ -43,6 +43,7 @@ This assistant uses:
 ├── notebook/             # Jupyter notebook for development 
 ├── document.zip/         # Source documents used for retrieval
 ├── LICENSE               # MIT license
+├── requirements.txt      # contains libraries to run the project
 └── README.md             # Overview of the Project
 ```
 
