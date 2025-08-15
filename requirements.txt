@@ -1,8 +1,28 @@
- transformers==4.24.0 
-- torch==1.12.1 
-- gradio==3.0.7 
-- chromadb==0.3.1 
-- faiss-cpu==1.7.2 
-- pandas==1.4.2 
-- numpy==1.23.1 
-- python-dotenv==0.20.0 
+# Core ML libraries
+torch==2.1.0
+transformers==4.43.2
+sentence-transformers==2.7.0
+
+# Vector stores & embeddings
+chromadb==0.5.5
+faiss-cpu==1.7.2
+
+# LangChain ecosystem
+langchain==0.2.11
+langchain-chroma==0.1.2
+langchain-community==0.2.10
+langchain-text-splitters==0.2.2
+langchain-groq==0.1.6
+
+# Data handling
+pandas==1.4.2
+numpy==1.23.1
+
+# File processing
+unstructured==0.15.0
+unstructured[pdf]==0.15.0
+
+# UI & environment
+gradio==3.0.7
+python-dotenv==0.20.0
+pydantic-settings==2.1.1
