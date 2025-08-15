@@ -54,8 +54,8 @@ To run this project locally, follow these steps:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/JOEL-TAMAKLOE/DEVELOPING_A_CHAT_ASSISTANT_USING_RAG.git
-   cd DEVELOPING_A_CHAT_ASSISTANT_USING_RAG
+   git clone https://github.com/JOEL-TAMAKLOE/DEVELOPING_AI_CHAT_ASSISTANT_USING_RAG.git
+   cd DEVELOPING_AI_CHAT_ASSISTANT_USING_RAG
    ```
 
 ---
