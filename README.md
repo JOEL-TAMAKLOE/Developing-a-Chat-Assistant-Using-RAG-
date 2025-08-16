@@ -1,9 +1,11 @@
-# Developing a Chat Assistant Using Retrieval Augmented Generation (RAG)
+# 🤖 Developing a Chat Assistant Using Retrieval Augmented Generation (RAG)
 
 ## Overview
 This project focuses on developing a personalized AI assistant utilizing Retrieval-Augmented Generation (RAG) techniques. The assistant leverages advanced machine learning models to provide insightful answers about artificial intelligence.
+[![Joel A.I chat Assistant — Live demo](https://img.shields.io/badge/%F0%9F%A4%97%20Live%20Demo-Hugging%20Face-blue)](https://huggingface.co/spaces/your-username/your-space-name)
 
 ---
+
 
 ## Purpose
 The goal is to provide an intuitive way for users to interact with AI and gain insights on topics related to artificial intelligence.
@@ -17,6 +19,21 @@ This assistant uses:
 - **Chroma**: For vector database management to store and retrieve information efficiently.
 - **Gradio**: To create a user-friendly web interface for interaction.
 - **Libraries**: Hugging Face Transformers, PDF loaders, etc.
+
+---
+
+**Flow**
+User Query → Embed + Search (ChromaDB) → Retrieve Context → LLM (Groq/HF) → Final Answer
+
+---
+
+## 🎨 Visual Overview
+
+### High-Level RAG Flow
+![RAG Architecture Flow](images/rag_flowchart.png)
+
+### Assistant in Action
+![Chat Interface](images/chat_demo.png)
 
 ---
 
@@ -40,23 +57,14 @@ This assistant uses:
 │
 ├── .env.example          # Template for environment variables
 ├── config.py             # Configuration settings
-├── notebook/             # Jupyter notebook for development 
+├─  app.py                #converted project ipynb file to py (as main gradio entry poin)
+├── notebook/             # Jupyter notebook for development
+├─ images/                # images of live screenshots
 ├── document.zip/         # Source documents used for retrieval
 ├── LICENSE               # MIT license
 ├── requirements.txt      # contains libraries to run the project
 └── README.md             # Overview of the Project
 ```
-
----
-
-## Installation Instructions
-To run this project locally, follow these steps:
-
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/JOEL-TAMAKLOE/DEVELOPING_AI_CHAT_ASSISTANT_USING_RAG.git
-   cd DEVELOPING_AI_CHAT_ASSISTANT_USING_RAG
-   ```
 
 ---
 
@@ -74,7 +82,63 @@ To run this project locally, follow these steps:
 
 ---
 
-## Usage
+## Installation Instructions
+To run this project locally, follow these steps:
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/JOEL-TAMAKLOE/DEVELOPING_AI_CHAT_ASSISTANT_USING_RAG.git
+   cd DEVELOPING_AI_CHAT_ASSISTANT_USING_RAG
+   ```
+
+2. ***(Recommended) Create a virtual environment***
+python -m venv venv
+ ***Windows:***
+- venv\Scripts\activate
+***macOS/Linux:***
+- source venv/bin/activate
+
+3. ***Install dependencies***
+- pip install -r requirements.txt
+
+4. ***Environment variables***
+- Copy the `.env.example` file and rename it to `.env`.
+- Replace the placeholder value for `GROG_API_KEY` with your actual API key obtained from **Grogcloud**.
+- →GROQ_API_KEY=your_api_key_here
+- Note: The project is configured to work specifically with Grogcloud's services. If you wish to use another provider, ensure the API is compatible and update the `config.py` file accordingly. ***However, when deploying to hugging face,**do not include .env file.*****
+
+
+---
+
+
+## 🌐 Hosting on hugging Face
+- ### Prepare your repo
+- ***Ensure these files are at the repo root:***
+- app.py 
+-requirements.txt
+-config.py
+-documents/ (optional, if you want bundled docs)
+-README.md
+  ***Again, do not commit your .env. Use Hugging Face Secrets instead***.
+
+- ### Create a Space
+- Go to Hugging Face → Spaces → New Space
+- SDK: choose Gradio
+- Name your Space, set Public or Private, and create
+
+- ### Add your secret (API key)
+- In your Space, open Settings → Variables and secrets
+- Click ***Add New Secret***
+   - Name: GROQ_API_KEY
+   - Value: your Groq API key
+- Save
+
+- ### Push code to the Space
+
+---
+
+
+## ▶️ Usage
 - **Asking Questions**: Type your questions into the text box and hit Enter. The assistant will respond based on its trained knowledge and the documents loaded into the system.
 - **Viewing Source Documents**: After receiving an answer, the assistant provides links to the source documents used to generate the response.
 - **Conversational History**: The chat maintains a history of interactions for context-aware responses within the session.
