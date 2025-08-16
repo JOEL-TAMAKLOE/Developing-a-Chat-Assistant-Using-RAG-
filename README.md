@@ -33,7 +33,7 @@ User Query → Embed + Search (ChromaDB) → Retrieve Context → LLM (Groq/HF) 
 ![RAG Architecture Flow](images/rag_flowchart.png)
 
 ### Assistant in Action
-![Chat Interface](images/chat_demo.png)
+![Chat Interface](images/chat_demo.jpg)
 
 ---
 
