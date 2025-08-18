@@ -1,8 +1,19 @@
+---
+license: mit
+sdk: gradio
+sdk_version: 5.42.0
+app_file: app.py
+emoji: 💬
+colorFrom: blue
+colorTo: green
+title: Joel AI chat Assistant (RAG)
+pinned: false
+---
 # 🤖 Developing a Chat Assistant Using Retrieval Augmented Generation (RAG)
 
 ## Overview
 This project focuses on developing a personalized AI assistant utilizing Retrieval-Augmented Generation (RAG) techniques. The assistant leverages advanced machine learning models to provide insightful answers about artificial intelligence.
-[![Joel A.I chat Assistant — Live demo](https://img.shields.io/badge/%F0%9F%A4%97%20Live%20Demo-Hugging%20Face-blue)](https://huggingface.co/spaces/your-username/your-space-name)
+[![Joel A.I chat Assistant — Live demo](https://img.shields.io/badge/%F0%9F%A4%97%20Live%20Demo-Hugging%20Face-blue)](https://huggingface.co/spaces/Khafui/Joel_AI_chat)
 
 ---
 
@@ -174,4 +185,3 @@ Contributions are welcome! If you have suggestions for improvements, please fork
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
