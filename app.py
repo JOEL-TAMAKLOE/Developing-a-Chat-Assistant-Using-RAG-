@@ -202,7 +202,14 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                 show_copy_button=True,
             )
             msg = gr.Textbox(placeholder="Type your question here...", autofocus=True)
+            send_btn = gr.Button("📤 Send")
             clear = gr.Button("🧹 Clear Chat")
+
+            msg.submit(chat_fn, [msg, chatbot], [chatbot]).then(lambda: "", None, msg)
+            send_btn.click(chat_fn, [msg, chatbot], [chatbot]).then(lambda: "", None, msg)
+            clear.click(clear_chat, None, chatbot, queue=False)
+
+            
 
     gr.Markdown(
         """
@@ -217,4 +224,4 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 
 # -------------------- RUN --------------------
 if __name__ == "__main__":
-    demo.queue().launch()
+    demo.launch()
