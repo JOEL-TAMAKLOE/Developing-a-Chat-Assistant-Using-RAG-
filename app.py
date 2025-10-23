@@ -1,47 +1,92 @@
+Hugging Face's logo
+Hugging Face
+Models
+Datasets
+Spaces
+Community
+Docs
+Pricing
+
+
+Spaces:
+Khafui
+/
+Joel_AI_chat
+
+
+like
+1
+
+App
+Files
+Community
+Settings
+Joel_AI_chat
+/
+app.py
+
+Khafui's picture
+Khafui
+included a general response line for questions outside the context topic
+43deb4c
+verified
+12 days ago
+raw
+
+Copy download link
+history
+blame
+edit
+delete
+
+9.95 kB
 import os
-import random
 import time
+import random
+import warnings
+
 import gradio as gr
 
-from langchain_community.document_loaders import PyPDFDirectoryLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from config import settings
+
+# Langchain / Chroma / embeddings / LLM imports
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain.chains import ConversationalRetrievalChain
+from langchain_chroma import Chroma
 from langchain_groq import ChatGroq
+from langchain.chains import ConversationalRetrievalChain
 
-# -------------------- CONFIG --------------------
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    raise ValueError("❌ Missing GROQ_API_KEY. Set it in Hugging Face ‘Settings → Variables and secrets’.")
+warnings.filterwarnings("ignore")
 
-DOCS_DIR = "documents"
-PERSIST_DIR = "chroma_db"
-COLLECTION_NAME = "knowledge_base"
+# -------------------- SETTINGS / VECTORSTORE LOAD --------------------
+persist_directory = "chroma_db"
+groq_api_key = settings.groq_api_key  
 
-# -------------------- DATA PIPELINE --------------------
-loader = PyPDFDirectoryLoader(DOCS_DIR) if os.path.isdir(DOCS_DIR) else None
-docs = loader.load() if loader else []
-
-chunks = []
-if docs:
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    chunks = splitter.split_documents(docs)
-
+# Instantiate embeddings
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-if chunks:
-    vectorstore = Chroma.from_documents(chunks, embeddings, persist_directory=PERSIST_DIR)
-else:
-    vectorstore = Chroma(
-        collection_name=COLLECTION_NAME,
-        embedding_function=embeddings,
-        persist_directory=PERSIST_DIR,
-    )
+# Load the existing Chroma vectorstore from disk
+vectorstore = Chroma(
+    persist_directory=persist_directory,
+    embedding_function=embeddings
+)
 
-llm = ChatGroq(model="llama3-8b-8192", api_key=GROQ_API_KEY)
-retriever = vectorstore.as_retriever()
-conv_chain = ConversationalRetrievalChain.from_llm(llm, retriever=retriever)
+# Create a retriever (tweak search_kwargs if you want more/fewer results)
+retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+
+# Create LLM (ChatGroq). Tweak model/temperature as needed
+llm = ChatGroq(
+    model="llama-3.3-70b-versatile",
+    temperature=0.5,
+    groq_api_key=groq_api_key
+)
+
+# Building the conversational retrieval chain
+conv_chain = ConversationalRetrievalChain.from_llm(
+    llm=llm,
+    retriever=retriever,
+    chain_type="stuff",
+    return_source_documents=True
+)
 
 # -------------------- RESPONSE HELPERS --------------------
 def clean_and_shorten(answer: str) -> str:
@@ -50,6 +95,7 @@ def clean_and_shorten(answer: str) -> str:
         sentences = answer.split(". ")
         return ". ".join(sentences[:4]).strip() + "..."
     return answer
+
 
 def chunk_long_paragraphs(text: str, max_words: int = 1000) -> str:
     """Break long responses into ~16–18 sentence chunks."""
@@ -65,8 +111,10 @@ def chunk_long_paragraphs(text: str, max_words: int = 1000) -> str:
         chunks.append(". ".join(buf).strip())
     return "\n\n".join(chunks)
 
+
 def stream_history_update(user_msg: str, bot_text: str, history):
     """Stream bot_text into the last assistant bubble."""
+    # history is list of tuples (user, bot)
     if len(bot_text) > 160:
         history = history + [(user_msg, "🤔 Thinking...")]
         yield history
@@ -82,19 +130,22 @@ def stream_history_update(user_msg: str, bot_text: str, history):
         yield history
         time.sleep(0.018)
 
+
 # -------------------- CHATBOT LOGIC --------------------
 chat_memory = []
 pending_chunks = []
 
+
 def generate_answer(user_question: str) -> str:
+    """Generate (or stream) an answer using RAG, with fallback to general reasoning and a friendly tone."""
     global pending_chunks
     uq = user_question.lower().strip()
 
-    # --- Check if user asked to continue ---
+    # --- CONTINUE CHUNK HANDLING ---
     if uq in ["yes", "continue", "more", "go on", "tell me more", "next", "keep going"]:
         if pending_chunks:
             nxt = pending_chunks.pop(0)
-            if pending_chunks:  # only hint again if there’s more left
+            if pending_chunks:
                 cont_prompts = [
                     "👉 Want me to go on?",
                     "👉 Should I keep going?",
@@ -104,39 +155,72 @@ def generate_answer(user_question: str) -> str:
                 return nxt + "\n\n" + random.choice(cont_prompts)
             return nxt
         else:
-            return "There’s nothing more to continue right now, what next would you love to know 🙂?"
+            return "There’s nothing more to continue right now — what would you like to explore next? 🙂"
 
-    # ❗ Reset pending chunks if user asked a new question
-    pending_chunks = []
+    pending_chunks = []  # reset chunks for new topic
 
-    # --- Custom response: founder / builder / owner ---
+    # --- CUSTOM PERSONALITY ANSWERS ---
     if "founder" in uq or "builder" in uq or "owner" in uq:
         return (
-            "This assistant was built and is maintained by **Joel Tamakloe** — a data scientist and AI & Cybersecurity enthusiast. 🚀\n\n"
-            "Joel has hands-on experience in creating AI-powered applications and solving real-world problems with data.\n\n"
-            "The assistant was created to make information about artificial intelligence more accessible and interactive. "
-            "It is powered by advanced AI models like LLaMA, Hugging Face embeddings, and Chroma for fast retrieval.\n\n"
-            "Currently, it's in the testing phase with a focus on AI-related topics, aiming to expand into education and business applications."
-        )
+           
+                "This chat assistant was built and is maintained by Mr. Joel Tamakloe, a data scientist and an AI and Cybersecurity enthusiast. "
+                "Joel's background includes extensive experience in building AI-powered applications and solving real-world problems using data. "
+                "This assistant was created to make information about artificial intelligence more accessible and to assist users in exploring AI concepts interactively. "
+                "It is powered by advanced AI models like LLaMA and uses cutting-edge tools such as Hugging Face for embedding and Chroma for vector storage. "
+                "Currently, it's in the testing phase with a focus on AI-related topics, aiming to improve its capabilities and expand into educational and business applications in the future."
+            )
 
-    # --- Custom response: self-intro / identity ---
-    if "who are you" in uq or "myself" in uq or "yourself" in uq:
+    if "who are you" in uq or "yourself" in uq or "myself" in uq:
         return (
-            "I’m your friendly AI chat assistant 🤖 — think of me as a curious buddy who loves talking about artificial intelligence.\n\n"
-            "I use tools like **LLaMA** (for understanding language) and **Chroma** (to fetch the right info fast).\n\n"
-            "My job is to make AI concepts easy to explore and fun to learn. "
-            "Over time, I’ll get better at conversations, and who knows maybe add voice or video interactions too! 🎤📹\n\n"
-            "So, feel free to ask me anything about AI. I’m here to chat!"
+            "I am an AI-powered chat assistant🤖 designed to assist users with exploring and learning about artificial intelligence and related topics. "
+                "My purpose is to provide an intuitive way for users to interact with AI and gain insights on topics related to artificial intelligence. "
+                "I use advanced tools and technologies like the LLaMA model, a powerful large language model, to process natural language queries, and Chroma, a vector database management system, to efficiently store and retrieve information. "
+                "In the future, I plan to expand my abilities to cover more topics, improve response accuracy, and possibly integrate video and voice interaction for a more dynamic user experience. "
+                "Ask me anything about A.I. I am happy to help! 😊"
         )
 
-    # --- Custom response: greetings ---
     if any(greet in uq for greet in ["hello", "hi", "hey"]):
-        return "👋 Hello! How can I help you today?"
+        return random.choice([
+            "👋 Hey there! How can I help you today?",
+            "Hi! 😊 What would you like to talk about?",
+            "Hey hey! Got a question for me?"
+        ])
 
-    # --- Normal RAG answer ---
-    result = conv_chain.invoke({"question": user_question, "chat_history": chat_memory})
-    full_answer = result["answer"] if isinstance(result, dict) and "answer" in result else str(result)
+    # --- STEP 1: TRY CONTEXTUAL (RAG) ANSWER ---
+    try:
+        result = conv_chain.invoke({"question": user_question, "chat_history": chat_memory})
+        full_answer = result.get("answer", "").strip()
+    except Exception as e:
+        full_answer = ""
 
+    # --- STEP 2: DETECT IF CONTEXT WAS USEFUL ---
+    if not full_answer or any(
+        phrase in full_answer.lower()
+        for phrase in [
+            "don't know",
+            "not sure",
+            "no information",
+            "no relevant context",
+            "not mentioned in the provided context",
+        ]
+    ):
+        # --- STEP 3: FALLBACK TO GENERAL KNOWLEDGE ---
+        general_response = llm.invoke(
+            f"Answer this question conversationally and clearly: {user_question}"
+        )
+        full_answer = general_response.content if hasattr(general_response, "content") else str(general_response)
+
+        # Make tone friendly
+        friendly_starters = [
+            "Sure! 😊",
+            "Of course! Here’s a quick answer:",
+            "Good question! Let’s talk about that —",
+            "Here’s what I can tell you 👇",
+            "Absolutely — here’s a simple explanation:"
+        ]
+        full_answer = f"{random.choice(friendly_starters)} {full_answer}"
+
+    # --- STEP 4: SPLIT INTO CHUNKS + ADD CLOSERS ---
     chunks_list = chunk_long_paragraphs(full_answer).split("\n\n")
     pending_chunks = chunks_list[1:]
     answer = chunks_list[0]
@@ -151,18 +235,21 @@ def generate_answer(user_question: str) -> str:
         answer += "\n\n" + random.choice(cont_prompts)
     else:
         answer = clean_and_shorten(answer)
-        if random.random() < 0.3:
+        if random.random() < 0.35:
             closers = [
                 "😃 What else would you like to explore?",
                 "Pretty cool, right?",
                 "Does that make sense?",
-                "Keep the questions coming!",
+                "Want to dive into another topic?",
+                "Keep the questions coming!"
             ]
             answer += "\n\n" + random.choice(closers)
 
     return answer
 
+
 def chat_fn(user_message, history):
+    """Gradio stream-compatible chat function. Yields updated history states."""
     bot_text = generate_answer(user_message)
 
     global chat_memory
@@ -171,11 +258,13 @@ def chat_fn(user_message, history):
     for h in stream_history_update(user_message, bot_text, history):
         yield h
 
+
 def clear_chat():
     global chat_memory, pending_chunks
     chat_memory = []
     pending_chunks = []
     return []
+
 
 # -------------------- GRADIO UI --------------------
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
@@ -198,18 +287,16 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
             chatbot = gr.Chatbot(
                 height=360,
                 label="Chat with Joel AI",
-                bubble_full_width=False,
                 show_copy_button=True,
             )
             msg = gr.Textbox(placeholder="Type your question here...", autofocus=True)
             send_btn = gr.Button("📤 Send")
             clear = gr.Button("🧹 Clear Chat")
 
-            msg.submit(chat_fn, [msg, chatbot], [chatbot]).then(lambda: "", None, msg)
-            send_btn.click(chat_fn, [msg, chatbot], [chatbot]).then(lambda: "", None, msg)
+            # Wire up interactions: streaming via generator
+            msg.submit(chat_fn, [msg, chatbot], [chatbot])
+            send_btn.click(chat_fn, [msg, chatbot], [chatbot])
             clear.click(clear_chat, None, chatbot, queue=False)
-
-            
 
     gr.Markdown(
         """
@@ -219,9 +306,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         """
     )
 
-    msg.submit(chat_fn, [msg, chatbot], [chatbot]).then(lambda: "", None, msg)
-    clear.click(clear_chat, None, chatbot, queue=False)
-
 # -------------------- RUN --------------------
 if __name__ == "__main__":
     demo.launch()
+
